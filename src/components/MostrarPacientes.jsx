@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const MostrarPacientes = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -14,15 +15,25 @@ const MostrarPacientes = () => {
   });
 
   useEffect(() => {
-    const pacientesGuardados = JSON.parse(localStorage.getItem('pacientes')) || [];
-    setPacientes(pacientesGuardados);
+    obtenerPacientes();
   }, []);
 
-  const handleEliminar = (index) => {
-    const pacientesActualizados = [...pacientes];
-    pacientesActualizados.splice(index, 1);
-    localStorage.setItem('pacientes', JSON.stringify(pacientesActualizados));
-    setPacientes(pacientesActualizados);
+  const obtenerPacientes = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/pacientes');
+      setPacientes(response.data);
+    } catch (error) {
+      console.error('Error al obtener pacientes:', error);
+    }
+  };
+
+  const handleEliminar = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/pacientes/${id}`);
+      setPacientes(pacientes.filter(paciente => paciente.id !== id));
+    } catch (error) {
+      console.error('Error al eliminar paciente:', error);
+    }
   };
 
   const handleModificar = (index) => {
@@ -38,12 +49,14 @@ const MostrarPacientes = () => {
     });
   };
 
-  const handleGuardar = (index) => {
-    const pacientesActualizados = [...pacientes];
-    pacientesActualizados[index] = editFormData;
-    localStorage.setItem('pacientes', JSON.stringify(pacientesActualizados));
-    setPacientes(pacientesActualizados);
-    setEditIndex(null);
+  const handleGuardar = async (id) => {
+    try {
+      await axios.put(`http://localhost:5000/api/pacientes/${id}`, editFormData);
+      obtenerPacientes();
+      setEditIndex(null);
+    } catch (error) {
+      console.error('Error al guardar cambios del paciente:', error);
+    }
   };
 
   return (
@@ -52,7 +65,7 @@ const MostrarPacientes = () => {
       <div className="w3-container w3-card-4 w3-light-grey w3-text-teal w3-margin">
         {pacientes.length > 0 ? (
           pacientes.map((paciente, index) => (
-            <div key={index} className="w3-container w3-border-bottom w3-margin-bottom">
+            <div key={paciente.id} className="w3-container w3-border-bottom w3-margin-bottom">
               {editIndex === index ? (
                 <div>
                   <p><strong>Nombre:</strong>
@@ -118,7 +131,7 @@ const MostrarPacientes = () => {
                       onChange={handleChange}
                     />
                   </p>
-                  <button className="w3-button w3-teal w3-margin-right" onClick={() => handleGuardar(index)}>Guardar</button>
+                  <button className="w3-button w3-teal w3-margin-right" onClick={() => handleGuardar(paciente.id)}>Guardar</button>
                   <button className="w3-button w3-red" onClick={() => setEditIndex(null)}>Cancelar</button>
                 </div>
               ) : (
@@ -132,7 +145,7 @@ const MostrarPacientes = () => {
                   <p><strong>NSS:</strong> {paciente.nss}</p>
                   <div className="w3-container">
                     <button className="w3-button w3-teal w3-margin-right" onClick={() => handleModificar(index)}>Modificar</button>
-                    <button className="w3-button w3-red" onClick={() => handleEliminar(index)}>Eliminar</button>
+                    <button className="w3-button w3-red" onClick={() => handleEliminar(paciente.id)}>Eliminar</button>
                   </div>
                 </div>
               )}

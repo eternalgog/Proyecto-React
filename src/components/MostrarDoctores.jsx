@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const MostrarDoctores = () => {
   const [psicologos, setPsicologos] = useState([]);
@@ -12,15 +13,26 @@ const MostrarDoctores = () => {
   });
 
   useEffect(() => {
-    const psicologosGuardados = JSON.parse(localStorage.getItem('psicologos')) || [];
-    setPsicologos(psicologosGuardados);
+    fetchPsicologos();
   }, []);
 
-  const handleDelete = (index) => {
-    const updatedPsicologos = [...psicologos];
-    updatedPsicologos.splice(index, 1);
-    localStorage.setItem('psicologos', JSON.stringify(updatedPsicologos));
-    setPsicologos(updatedPsicologos);
+  const fetchPsicologos = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/psicologos');
+      console.log('Datos obtenidos:', response.data); // Depuración
+      setPsicologos(response.data);
+    } catch (error) {
+      console.error('Error fetching psicologos:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/psicologos/${id}`);
+      fetchPsicologos();
+    } catch (error) {
+      console.error('Error deleting psicologo:', error);
+    }
   };
 
   const handleEdit = (index) => {
@@ -39,19 +51,21 @@ const MostrarDoctores = () => {
     });
   };
 
-  const handleSaveEdit = () => {
-    const updatedPsicologos = [...psicologos];
-    updatedPsicologos[editingIndex] = editedPsicologo;
-    localStorage.setItem('psicologos', JSON.stringify(updatedPsicologos));
-    setPsicologos(updatedPsicologos);
-    setEditingIndex(null);
-    setEditedPsicologo({
-      nombre: '',
-      enfoque: '',
-      telefono: '',
-      correo: '',
-      rfc: ''
-    });
+  const handleSaveEdit = async () => {
+    try {
+      await axios.put(`http://localhost:5000/api/psicologos/${editedPsicologo.id}`, editedPsicologo);
+      fetchPsicologos();
+      setEditingIndex(null);
+      setEditedPsicologo({
+        nombre: '',
+        enfoque: '',
+        telefono: '',
+        correo: '',
+        rfc: ''
+      });
+    } catch (error) {
+      console.error('Error updating psicologo:', error);
+    }
   };
 
   const handleChangeEdit = (e) => {
@@ -68,7 +82,7 @@ const MostrarDoctores = () => {
       <div className="w3-container w3-card-4 w3-light-grey w3-text-teal w3-margin">
         {psicologos.length > 0 ? (
           psicologos.map((psicologo, index) => (
-            <div key={index} className="w3-container w3-border-bottom w3-margin-bottom">
+            <div key={psicologo.id} className="w3-container w3-border-bottom w3-margin-bottom">
               {editingIndex === index ? (
                 <>
                   <div className="w3-row w3-section">
@@ -125,14 +139,14 @@ const MostrarDoctores = () => {
                   <p><strong>RFC:</strong> {psicologo.rfc}</p>
                   <div className="w3-row w3-section">
                     <button onClick={() => handleEdit(index)} className="w3-button w3-teal w3-small w3-margin-right">Editar</button>
-                    <button onClick={() => handleDelete(index)} className="w3-button w3-red w3-small">Eliminar</button>
+                    <button onClick={() => handleDelete(psicologo.id)} className="w3-button w3-red w3-small">Eliminar</button>
                   </div>
                 </>
               )}
             </div>
           ))
         ) : (
-          <p>No hay psicólogos registrados.</p>
+          <p>No hay psicólogos registrados</p>
         )}
       </div>
     </div>

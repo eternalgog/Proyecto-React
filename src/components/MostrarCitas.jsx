@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export const MostrarCitas = () => {
   const [citas, setCitas] = useState([]);
@@ -12,15 +13,31 @@ export const MostrarCitas = () => {
   });
 
   useEffect(() => {
-    const citasGuardadas = JSON.parse(localStorage.getItem('citas')) || [];
-    setCitas(citasGuardadas);
+    // Función para obtener las citas desde el servidor
+    const fetchCitas = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/citas');
+        setCitas(response.data); // Asigna las citas obtenidas del servidor al estado local
+      } catch (error) {
+        console.error('Error al obtener las citas:', error);
+      }
+    };
+
+    fetchCitas(); // Llama a la función para cargar las citas cuando el componente se monta
   }, []);
 
-  const handleEliminar = (index) => {
-    const citasActualizadas = [...citas];
-    citasActualizadas.splice(index, 1);
-    localStorage.setItem('citas', JSON.stringify(citasActualizadas));
-    setCitas(citasActualizadas);
+  const handleEliminar = async (index) => {
+    try {
+      // Realiza la solicitud DELETE al servidor para eliminar la cita por su ID
+      await axios.delete(`http://localhost:5000/api/citas/${citas[index].id}`);
+      
+      // Actualiza el estado local de citas después de eliminar
+      const citasActualizadas = [...citas];
+      citasActualizadas.splice(index, 1);
+      setCitas(citasActualizadas);
+    } catch (error) {
+      console.error('Error al eliminar la cita:', error);
+    }
   };
 
   const handleModificar = (index) => {
@@ -36,12 +53,19 @@ export const MostrarCitas = () => {
     });
   };
 
-  const handleGuardar = (index) => {
-    const citasActualizadas = [...citas];
-    citasActualizadas[index] = editFormData;
-    localStorage.setItem('citas', JSON.stringify(citasActualizadas));
-    setCitas(citasActualizadas);
-    setEditIndex(null);
+  const handleGuardar = async (index) => {
+    try {
+      // Realiza la solicitud PUT al servidor para actualizar la cita por su ID
+      await axios.put(`http://localhost:5000/api/citas/${citas[index].id}`, editFormData);
+      
+      // Actualiza el estado local de citas después de guardar los cambios
+      const citasActualizadas = [...citas];
+      citasActualizadas[index] = editFormData;
+      setCitas(citasActualizadas);
+      setEditIndex(null);
+    } catch (error) {
+      console.error('Error al guardar la cita:', error);
+    }
   };
 
   return (

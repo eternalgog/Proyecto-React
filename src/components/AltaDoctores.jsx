@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const AltaDoctores = () => {
   const [formData, setFormData] = useState({
@@ -18,25 +19,28 @@ const AltaDoctores = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const psicologos = JSON.parse(localStorage.getItem('psicologos')) || [];
     psicologos.push(formData);
     localStorage.setItem('psicologos', JSON.stringify(psicologos));
-    // Reiniciar los datos del formulario
-    setFormData({
-      nombre: '',
-      enfoque: '',
-      telefono: '',
-      correo: '',
-      rfc: ''
-    });
-    // Mostrar el mensaje de guardado exitoso
-    setGuardadoExitoso(true);
-    // Ocultar el mensaje después de 3 segundos
-    setTimeout(() => {
-      setGuardadoExitoso(false);
-    }, 3000);
+
+    try {
+      await axios.post('http://localhost:5000/api/psicologos', formData);
+      setFormData({
+        nombre: '',
+        enfoque: '',
+        telefono: '',
+        correo: '',
+        rfc: ''
+      });
+      setGuardadoExitoso(true);
+      setTimeout(() => {
+        setGuardadoExitoso(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error al guardar en la base de datos:', error);
+    }
   };
 
   return (

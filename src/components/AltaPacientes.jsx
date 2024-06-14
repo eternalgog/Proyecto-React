@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const AltaPacientes = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const AltaPacientes = () => {
     genero: '',
     nss: ''
   });
+  const [guardadoExitoso, setGuardadoExitoso] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,11 +21,22 @@ const AltaPacientes = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Guardar en localStorage
     const pacientes = JSON.parse(localStorage.getItem('pacientes')) || [];
     pacientes.push(formData);
     localStorage.setItem('pacientes', JSON.stringify(pacientes));
+
+    // Guardar en la base de datos SQLite
+    try {
+      await axios.post('http://localhost:5000/api/pacientes', formData);
+      console.log('Paciente guardado en la base de datos remota.');
+    } catch (error) {
+      console.error('Error al guardar en la base de datos remota:', error);
+    }
+
     // Reiniciar los datos del formulario
     setFormData({
       nombre: '',
@@ -34,12 +47,20 @@ const AltaPacientes = () => {
       genero: '',
       nss: ''
     });
+
+    // Mostrar mensaje de guardado exitoso
+    setGuardadoExitoso(true);
+    setTimeout(() => {
+      setGuardadoExitoso(false);
+    }, 3000);
   };
 
   return (
     <div className="w3-container w3-padding-large">
       <h2 className="w3-text-teal">Alta de Pacientes</h2>
+      {guardadoExitoso && <p className="w3-text-green">¡Paciente guardado correctamente!</p>}
       <form onSubmit={handleSubmit} className="w3-container w3-card-4 w3-light-grey w3-text-teal w3-margin">
+        {/* Input fields */}
         <div className="w3-row w3-section">
           <div className="w3-col" style={{ width: "50px" }}><i className="w3-xxlarge fa fa-user"></i></div>
           <div className="w3-rest">
